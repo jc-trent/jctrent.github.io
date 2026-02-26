@@ -1,0 +1,26 @@
+title: J.C. Trent
+description: Author of The Red Cloth series
+url: "https://www.jctrent.com"
+baseurl: ""
+
+# Build
+markdown: kramdown
+permalink: pretty
+exclude:
+  - README.md
+  - LICENSE
+  - Gemfile
+  - Gemfile.lock
+
+# Site
+author:
+  name: J.C. Trent
+
+collections:
+  posts:
+    output: true
+
+# Collections for future use (e.g. blog posts from substack embeds)
+# collections:
+#   posts:
+#     output: true

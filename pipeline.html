@@ -1,0 +1,508 @@
+---
+layout: default
+title: Pipeline
+description: "How I build my books — a markdown-first self-publishing workflow using pandoc, VS Code, and automation."
+wide: true
+---
+
+<div class="page-header">
+  <h1>How I Build My Books</h1>
+  <p class="subtitle">
+    A markdown-first self-publishing pipeline for people who'd rather
+    write in a text editor than fight with formatting software.
+  </p>
+</div>
+
+<div class="pipeline-intro">
+
+  <blockquote>
+    <strong>A note on quality:</strong> Writing is a hobby. Software engineering
+    is my day job. If you think that means this is a professional product,
+    you don't know any software engineers. We accept the jank, because the
+    last 10% to polish something into a professional product is 90% of the
+    work — which, come to think of it, is also true of writing. Either way,
+    this is not polished software. It does work. If you can live with rough
+    edges, it might work for you too. Use at your own risk. It works on my machine.
+  </blockquote>
+
+  <div class="fit-check">
+    <p><strong>This might be a good fit if you:</strong></p>
+    <ul>
+      <li>like writing in plain text</li>
+      <li>want reproducible, one-command builds</li>
+      <li>don't mind a little tooling to get there</li>
+    </ul>
+    <p><strong>Probably not a fit if you:</strong></p>
+    <ul>
+      <li>want WYSIWYG formatting while you write</li>
+      <li>never want to open a terminal</li>
+    </ul>
+  </div>
+
+  <p>
+    I've spent a lot of time researching how to go from "a pile of text files"
+    to "a real book people can buy," and the information is scattered across
+    dozens of docs, forums, and blog posts. So I figured I'd put everything
+    I've learned in one place.
+  </p>
+
+  <p>
+    I write my novels in plain markdown files, organized in folders. A Python
+    build script assembles them and calls
+    <a href="https://pandoc.org" target="_blank" rel="noopener">pandoc</a>
+    to produce publication-ready EPUB, DOCX, PDF, and merged markdown — all
+    from the same source files. No copy-pasting between tools, no
+    reformatting, no proprietary lock-in.
+  </p>
+
+  <p>
+    I hire professionals for the things that actually matter: line editing,
+    copy editing, proofreading, and cover art. Everything else — typesetting,
+    formatting, validation, output generation — is automated. The scripts are
+    open source if you want to look at them, steal from them, or improve on
+    them.
+  </p>
+
+  <p>
+    <a href="https://github.com/jc-trent/markdown-book-pipeline" class="btn btn-ghost" target="_blank" rel="noopener">View on GitHub</a>
+  </p>
+</div>
+
+<hr>
+
+<h2>Why Markdown? (And Why Not Everything Else)</h2>
+
+<p>
+  Let me be honest about what actually drove this: <strong>I wanted real
+  version history.</strong> I wanted to create branches, drop an editor's
+  proposed changes into a clean diff, see exactly what changed between draft
+  two and draft five, and roll back anything. That meant git, and git meant
+  plain text files. And by the time you get to
+  <code>my_novel_v47_FINAL_real_FINAL2.docx</code>, that's not version
+  control, that's hoarding.
+</p>
+
+<p>
+  Once git was a requirement, the tool choices narrowed fast. You need
+  plain text files. That means markdown. And if you're writing markdown,
+  you need a build pipeline to turn it into something readers can actually
+  open. So here we are. (If you don't care about diffs, you can ignore the
+  git parts and still steal the rest.)
+</p>
+
+<p>
+  I should be clear: <strong>I haven't made anything better.</strong> I've
+  just traded one set of friction for a different set that I personally find
+  more tolerable. I'll take a messier writing experience if it means real
+  version control. I'll take a less pretty EPUB if it means I can regenerate
+  an edited one in 15 seconds. I'll take "you have to learn what a Lua
+  filter is" over "why is Scrivener's compile doing that and how do I make
+  it stop."
+</p>
+
+<p>
+  I tried the tools you're supposed to use. Google Docs, Word, Scrivener.
+  They're good software, and genuinely — if they work for you, keep using
+  them. I'm not here to convert anyone.
+</p>
+
+<p>
+  <strong>Google Docs</strong> was great for drafting and sharing with beta
+  readers, but exporting to anything else was always a mess. Styles wouldn't
+  transfer. Formatting broke. And once the manuscript hit 100k words, it
+  started to chug. Also: not a plain text file, so no git.
+</p>
+
+<p>
+  <strong>Word</strong> is powerful but I spent more time wrestling with
+  styles, section breaks, and "why is this paragraph suddenly in a different
+  font" than actually writing. It also stores everything in a binary format
+  that git can't meaningfully diff. You can track that the file changed.
+  You cannot see <em>what</em> changed. Not very useful for diffing.
+</p>
+
+<p>
+  <strong>Scrivener</strong> is the closest to what I wanted. The binder,
+  the corkboard, the compile system — it's built for novelists. But I found
+  the compile step opaque. When something looked wrong in the output, I
+  couldn't tell if it was a Scrivener setting, a compile format issue, or
+  my own markup. I wanted to see exactly what was happening. And while
+  Scrivener technically stores RTF files you can put in git, the project
+  structure makes diffs noisy and merges terrifying.
+</p>
+
+<p>
+  <strong>Markdown</strong> is none of those things. It's a plain text file.
+  It diffs beautifully. When I write <code># Chapter Title</code>, that's
+  a chapter heading in every output format. When something looks wrong, I
+  open the file and I can see why. It works in any editor, and it separates
+  what I'm writing from how it looks.
+</p>
+
+<p>
+  The tradeoff is real: markdown has no built-in concept of "book." You need
+  tooling to assemble files, handle front/back matter, manage scene breaks,
+  and produce the output formats readers and retailers expect. That's what
+  the pipeline does. It's more setup than Scrivener, but once it's running,
+  I never think about formatting again. I just write.
+</p>
+
+<p>
+  My workflow is: <strong>write in Obsidian, edit in VS Code, build with
+  one command, hire professionals for edits and covers.</strong>
+</p>
+
+<hr>
+
+<h2>Why Git?</h2>
+
+<p>
+  If you're not a programmer, you've probably never heard of git. Here's the
+  short version: git is a tool that tracks every change you make to a set of
+  files, forever. Not "save a new copy" — every individual edit, to every file,
+  with a timestamp and a note about what you changed and why. It was built for
+  software engineers collaborating on code, but it works on any text file,
+  including a novel.
+</p>
+
+<p>
+  Here's what that looks like in practice for writing:
+</p>
+
+<p>
+  <strong>You can see exactly what changed between any two versions.</strong>
+  Git doesn't just tell you that chapter 12 was modified. It shows you,
+  line by line, what was added, removed, or rewritten. When your editor
+  suggests cutting a paragraph, you don't have to hope you remember what it
+  said — it's in the history. When you rewrite a scene and it gets worse,
+  you roll back. When you're wondering "didn't this chapter used to have a
+  conversation about X?", you can search the entire history and find exactly
+  when you cut it and why.
+</p>
+
+<p>
+  <strong>You can experiment without risk.</strong> Git has a concept called
+  "branches" — you can create a parallel version of your manuscript, try
+  something drastic (restructure the back half, kill a character earlier,
+  merge two chapters), and if it doesn't work, you throw the branch away.
+  Your original is untouched. If it does work, you merge it back in. This
+  is how I handle editor feedback: I create a branch, apply their suggestions,
+  review the result, and merge it when I'm satisfied.
+</p>
+
+<p>
+  <strong>You will never lose work.</strong> Every version of every file
+  is stored. Your laptop could die tomorrow and you'd lose nothing — the
+  full history lives in a remote repository (I use GitHub). This isn't a
+  backup in the "I saved a copy to Dropbox" sense. It's a complete, searchable
+  timeline of your entire manuscript from the first word to the final proof.
+</p>
+
+<p>
+  <strong>Compare that to the alternative.</strong> Most writers version
+  their manuscripts by saving copies:
+  <code>TheTrenchMage_v2.docx</code>,
+  <code>TheTrenchMage_v3_edited.docx</code>,
+  <code>TheTrenchMage_v3_edited_FINAL.docx</code>,
+  <code>TheTrenchMage_v3_edited_FINAL_real.docx</code>.
+  That's not version control, that's hoarding. You can't diff two Word files
+  to see what changed. You can't search across versions. You can't branch and
+  experiment safely. And when you need to find that paragraph you cut three
+  months ago, you're opening files one at a time and skimming.
+</p>
+
+<p>
+  Git solves all of this. The cost is that you have to learn a handful of
+  commands (or use a visual tool like the one built into VS Code), and your
+  files have to be plain text — which circles back to why I write in markdown.
+  The two decisions are connected. Git is why I use markdown. Markdown is what
+  makes git useful. The build pipeline exists to turn that plain text into
+  books. If you're starting from zero,
+  <a href="https://rogerdudler.github.io/git-guide/" target="_blank" rel="noopener">git - the simple guide</a>
+  is a five-minute read that covers everything you need.
+</p>
+
+<p>
+  Here's what a diff actually looks like. This is a real example of the
+  kind of change tracking you get — not "this paragraph was modified," but
+  exactly what was removed and what replaced it:
+</p>
+
+<div class="diff-example">
+<span class="diff-context">  Chapter 12: Silence</span>
+<span class="diff-context"></span>
+<span class="diff-removed">- Maren watched the column disappear into the tree line and said nothing.</span>
+<span class="diff-removed">- He had learned, by now, that silence was safer than anything</span>
+<span class="diff-removed">- the Quiet School had taught him.</span>
+<span class="diff-added">+ Maren watched the column disappear into the tree line.</span>
+<span class="diff-added">+ He didn't speak. Silence was the first thing the School</span>
+<span class="diff-added">+ had given him, and the last thing the war couldn't take.</span>
+</div>
+
+<p>
+  Lines starting with <code>-</code> were removed. Lines starting with
+  <code>+</code> were added. At a glance, I can see exactly what I changed
+  and why — the rewrite is tighter, the last line hits harder. In Word,
+  this would show up as a wall of red strikethroughs and blue insertions
+  that's nearly impossible to read across a full chapter. In Google Docs,
+  it's an "accept/reject" button with no context for what the rest of the
+  paragraph used to look like. In git, it's clean, readable, and I can
+  view it for every change I've ever made to any file in the entire
+  manuscript.
+</p>
+
+<p>
+  When my editor sends feedback and I spend a week applying it, I can
+  review every change I made in one view before I commit to it. Not
+  "I think I fixed everything" — I can see, line by line, every edit
+  across every chapter. That's what "accept changes" in Word is trying
+  to do. Git just does it better.
+</p>
+
+<p>
+  You don't need to learn any of this on day one. The diff view becomes
+  valuable once you start getting edits back — that's when it pays for
+  itself.
+</p>
+
+<p>
+  I want to be clear: this whole setup looks clunky, and it has a steeper
+  learning curve than most writing software. The result is more flexible,
+  more powerful, and gives me complete control over every file, every process,
+  and every step of the build. It was easy for me because I already had years
+  of experience with these tools — I'm not trying to convert anyone. But if
+  you took some Python classes in high school or college and thought it was
+  cool, you might enjoy giving this a shot.
+</p>
+
+<hr>
+
+<h2>The Toolchain</h2>
+
+<div class="tool-grid">
+  <div class="tool-card">
+    <h3>Obsidian</h3>
+    <p>Writing and drafting. Clean markdown editor, no distractions, works with plain files on disk.</p>
+  </div>
+  <div class="tool-card">
+    <h3>VS Code</h3>
+    <p>Editing and builds. Task runner triggers the pipeline, integrated terminal shows output. Good for find-and-replace across 30 chapter files.</p>
+  </div>
+  <div class="tool-card">
+    <h3>Pandoc</h3>
+    <p>The engine. Converts markdown to EPUB, DOCX, LaTeX, and everything else. Does 90% of the heavy lifting.</p>
+  </div>
+  <div class="tool-card">
+    <h3>XeLaTeX</h3>
+    <p>PDF compilation. Produces print-ready 6&times;9 trade paperbacks. Will absolutely eat your CPU alive. Worth it.</p>
+  </div>
+  <div class="tool-card">
+    <h3>Python</h3>
+    <p>Build orchestration, linting, EPUB post-processing, and validation. The glue that holds the pipeline together.</p>
+  </div>
+  <div class="tool-card">
+    <h3>Git</h3>
+    <p>Real version control, real diffs, real history. The reason I write in plain text. Everything else follows from this.</p>
+  </div>
+  <div class="tool-card">
+    <h3>epubcheck</h3>
+    <p>W3C's EPUB validator. Catches compliance issues before Amazon does. Saves you the fun of a rejected upload.</p>
+  </div>
+  <div class="tool-card">
+    <h3>Vale</h3>
+    <p>Prose linter. Catches wordiness, passive voice, and style issues. Not a replacement for a human editor, but useful for a first pass.</p>
+  </div>
+</div>
+
+<hr>
+
+<h2>How a Book Is Organized</h2>
+
+<p>Each book lives in its own directory with a simple structure:</p>
+
+<pre><code>manuscript/1_the_trench_mage/
+├── book.yaml            # Title, author, series, format settings
+├── front/
+│   ├── 00_titlepage.md
+│   ├── 01_copyright.md
+│   └── 02_epigraph.md
+├── chapters/
+│   ├── 00.1_Prologue.md
+│   ├── 01_Repetition.md
+│   ├── 02_Lesson.md
+│   └── ...
+├── back/
+│   ├── 01_before_you_go.md
+│   └── 02_appendices.md
+└── artifacts/
+    ├── cover.jpg        # Per-book cover
+    └── reference.docx   # Per-book DOCX styling template</code></pre>
+
+<p>
+  The build script reads <code>book.yaml</code> for metadata and settings,
+  assembles <code>front/ → chapters/ → back/</code> in sorted order,
+  and passes everything to pandoc. Shared resources (the epub CSS, the LaTeX
+  template, the Lua filters) live in a top-level <code>artifacts/</code>
+  directory. Per-book overrides — like cover images and DOCX reference
+  documents — go in the book's own <code>artifacts/</code> folder.
+</p>
+
+<p>
+  Adding a new book to the series means creating a new folder, writing a
+  <code>book.yaml</code>, and dumping markdown files into the right
+  subdirectories. The pipeline handles the rest.
+</p>
+
+<hr>
+
+<h2>The Build Process</h2>
+
+<div class="pipeline-step">
+  <h3>1. Write</h3>
+  <p>
+    Draft in Obsidian. One file per chapter. Scene breaks are <code>***</code>,
+    chapter headings are <code># Chapter Title</code>. Pandoc's fenced divs
+    handle special formatting like military documents and epigraphs. I don't
+    think about how anything will look until I build.
+  </p>
+</div>
+
+<div class="pipeline-step">
+  <h3>2. Lint</h3>
+  <p>
+    A custom linter scans for encoding issues (curly quotes that should be
+    straight, non-breaking spaces, zero-width characters), structural problems
+    (missing heading markers, unclosed divs), and formatting inconsistencies.
+    Auto-fixes what it can, flags the rest. This catches a surprising number
+    of issues that would otherwise silently break the build or produce weird
+    output.
+  </p>
+  <pre><code>python scripts/build.py lint trench</code></pre>
+</div>
+
+<div class="pipeline-step">
+  <h3>3. Build</h3>
+  <p>
+    One command produces all formats. EPUB gets a custom CSS stylesheet and
+    post-processing for accessibility metadata. DOCX uses a reference document
+    for styling (useful for sending to editors). PDF goes through a Lua filter
+    and XeLaTeX with a custom template for a print-ready 6&times;9 trade
+    paperback.
+  </p>
+  <pre><code>python scripts/build.py trench --all --verbose</code></pre>
+</div>
+
+<div class="pipeline-step">
+  <h3>4. Validate</h3>
+  <p>
+    The EPUB is automatically run through epubcheck after every build.
+    The build script also injects accessibility metadata.
+  </p>
+</div>
+
+<div class="pipeline-step">
+  <h3>5. Ship</h3>
+  <p>
+    Upload EPUB to KDP and other retailers. Upload the print-ready PDF
+    for the paperback. The same source files, the same build, every format.
+    No reformatting, no last-minute "oh no the headers are wrong in the
+    ebook version."
+  </p>
+</div>
+
+<hr>
+
+<h2>EPUB Cover Requirements</h2>
+
+<p>
+  Getting the cover image right for different retailers is one of those
+  things that's documented in a dozen different places. None of them agree.
+  Here's what I've settled on:
+</p>
+
+<ul class="resource-list">
+  <li>
+    <strong>Amazon KDP (ebook):</strong> 2,560 &times; 1,600 px minimum
+    (ideal 1.6:1 ratio). Keep the file reasonably small.
+    <br><span class="resource-desc">
+      <a href="https://kdp.amazon.com/en_US/help/topic/G6GTK3T3NUHKLEFX" target="_blank" rel="noopener">KDP cover guidelines</a>
+    </span>
+  </li>
+  <li>
+    <strong>Amazon KDP (paperback):</strong> Wrap template generated from
+    KDP's cover calculator based on page count, trim size, and paper type.
+    300 DPI minimum. PDF upload. Your cover artist will need the spine width,
+    which you won't know until the interior PDF is finalized. Chicken-and-egg
+    problem. Plan accordingly.
+    <br><span class="resource-desc">
+      <a href="https://kdp.amazon.com/en_US/cover-calculator" target="_blank" rel="noopener">KDP cover calculator</a>
+    </span>
+  </li>
+  <li>
+    <strong>EPUB internal cover:</strong> I use the same front-cover JPEG
+    as the ebook listing. Pandoc embeds it with
+    <code>--epub-cover-image</code>. Keep it under 5 MB or some readers
+    will choke on it.
+  </li>
+</ul>
+
+<hr>
+
+<h2>Useful Links</h2>
+
+<p>
+  These are the docs and resources I actually used. Not a curated list of
+  everything that exists — just the ones I kept coming back to.
+</p>
+
+<ul class="resource-list">
+  <li>
+    <a href="https://rogerdudler.github.io/git-guide/" target="_blank" rel="noopener">git - the simple guide</a>
+    <br><span class="resource-desc">One page. No jargon. Five-minute read. If you've never used git before, start here.</span>
+  </li>
+  <li>
+    <a href="https://www.atlassian.com/git/tutorials" target="_blank" rel="noopener">Atlassian Git Tutorials</a>
+    <br><span class="resource-desc">Structured, practical walkthroughs from beginner to advanced. The best free tutorial series I've found.</span>
+  </li>
+  <li>
+    <a href="https://pandoc.org/MANUAL.html" target="_blank" rel="noopener">Pandoc User's Guide</a>
+    <br><span class="resource-desc">The comprehensive reference. You will live here. Bookmark it.</span>
+  </li>
+  <li>
+    <a href="https://pandoc.org/lua-filters.html" target="_blank" rel="noopener">Pandoc Lua Filters</a>
+    <br><span class="resource-desc">How to write custom filters. This is how you handle things pandoc doesn't do out of the box (scene breaks, military documents, front matter transitions).</span>
+  </li>
+  <li>
+    <a href="https://www.w3.org/publishing/epubcheck/" target="_blank" rel="noopener">EPUBCheck</a>
+    <br><span class="resource-desc">W3C's official EPUB validation tool. Run it before you upload. Every time.</span>
+  </li>
+  <li>
+    <a href="https://kdp.amazon.com/en_US/" target="_blank" rel="noopener">Amazon KDP</a>
+    <br><span class="resource-desc">Kindle Direct Publishing. Where most self-pub authors start and where most of the sales happen.</span>
+  </li>
+  <li>
+    <a href="https://ctan.org/pkg/memoir" target="_blank" rel="noopener">memoir LaTeX class</a>
+    <br><span class="resource-desc">The LaTeX document class used for the print PDF. Absurdly flexible. The documentation is 600 pages long, which tells you everything you need to know about LaTeX.</span>
+  </li>
+  <li>
+    <a href="https://obsidian.md" target="_blank" rel="noopener">Obsidian</a>
+    <br><span class="resource-desc">Markdown editor. Works with plain files on disk. No proprietary format, no cloud lock-in. Just files.</span>
+  </li>
+  <li>
+    <a href="https://pages.github.com" target="_blank" rel="noopener">GitHub Pages</a>
+    <br><span class="resource-desc">Free static hosting. What this site runs on. Costs $0/month, which is the correct price for an author website.</span>
+  </li>
+</ul>
+
+<hr>
+
+<div class="pipeline-cta">
+  <p>
+    If you made it this far, you're probably the kind of person this was
+    built for. The whole pipeline is open source — clone it, read the docs,
+    steal the scripts.
+  </p>
+  <p>
+    <a href="https://github.com/jc-trent/markdown-book-pipeline" class="btn btn-ghost" target="_blank" rel="noopener">View on GitHub</a>
+  </p>
+</div>

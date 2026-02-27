@@ -45,8 +45,3 @@ title: Page Title
 
 Add a nav link in `_includes/nav.html`.
 
-## Custom domain
-
-1. Add a `CNAME` file containing your domain (e.g. `jctrent.com`)
-2. Point your DNS: CNAME record → `yourusername.github.io`
-3. Enable HTTPS in repo Settings → Pages

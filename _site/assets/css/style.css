@@ -6,34 +6,36 @@
 /* ── Variables ─────────────────────────────── */
 
 :root {
-  --bg:          #111010;
-  --bg-raised:   #1a1918;
-  --bg-card:     #1f1e1c;
-  --border:      #2a2826;
-  --border-light:#3a3734;
+  --bg: #111010;
+  --bg-raised: #1a1918;
+  --bg-card: #1f1e1c;
+  --border: #2a2826;
+  --border-light: #3a3734;
 
-  --text:        #c8c2b8;
-  --text-muted:  #8a8478;
+  --text: #c8c2b8;
+  --text-muted: #8a8478;
   --text-bright: #e8e2d8;
-  --heading:     #ede7dd;
+  --heading: #ede7dd;
 
-  --accent:      #983232;
+  --accent: #983232;
   --accent-glow: #b83a3a;
-  --accent-muted:#6e2424;
+  --accent-muted: #6e2424;
 
-  --font-body:   'Source Serif 4', 'Georgia', serif;
-  --font-head:   'EB Garamond', 'Georgia', serif;
-  --font-mono:   'IBM Plex Mono', 'Courier New', monospace;
-  --font-nav:    'Lexend', 'Helvetica Neue', sans-serif;
+  --font-body: 'Source Serif 4', 'Georgia', serif;
+  --font-head: 'EB Garamond', 'Georgia', serif;
+  --font-mono: 'IBM Plex Mono', 'Courier New', monospace;
+  --font-nav: 'Lexend', 'Helvetica Neue', sans-serif;
 
-  --max-width:   860px;
-  --max-wide:    1080px;
+  --max-width: 860px;
+  --max-wide: 1080px;
 }
 
 
 /* ── Reset & Base ──────────────────────────── */
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
@@ -58,7 +60,10 @@ body {
 
 /* ── Typography ────────────────────────────── */
 
-h1, h2, h3, h4 {
+h1,
+h2,
+h3,
+h4 {
   font-family: var(--font-head);
   color: var(--heading);
   font-weight: 400;
@@ -341,7 +346,7 @@ pre code {
   width: 100%;
   border-radius: 4px;
   box-shadow:
-    0 4px 20px rgba(0,0,0,0.5),
+    0 4px 20px rgba(0, 0, 0, 0.5),
     0 0 60px rgba(152, 50, 50, 0.08);
 }
 
@@ -496,7 +501,7 @@ pre code {
 .book-card-cover {
   width: 100%;
   border-radius: 3px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
 }
 
 .book-card-series {
